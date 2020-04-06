@@ -1,0 +1,16 @@
+name: MultiTeleport
+version: ${project.version}
+main: io.github.dice10.multiteleport.MultiTeleport
+api-version: 1.13
+authors: [DICE10]
+
+commands:
+  ntp:
+    usage: /<Command> <x> <y> <z>
+    description:  "通常テレポート"
+
+  mtp:
+    usage: /<Command> [nether/the-end/world]
+    description: "ディメンション間のテレポート"
+
+  test:
