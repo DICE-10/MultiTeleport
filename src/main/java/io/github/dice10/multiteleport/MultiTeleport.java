@@ -1,6 +1,5 @@
 package io.github.dice10.multiteleport;
 
-import net.md_5.bungee.api.chat.ClickEvent;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -8,11 +7,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -31,6 +27,9 @@ public final class MultiTeleport extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
         getLogger().info("プラグインを有効化しました。");
+//        tpPointJson pointJson = new tpPointJson();
+//        pointJson.findJSONFile();
+        getServer().getPluginManager().registerEvents(new PluginListener(this), this);
         getServer().getPluginManager().registerEvents(new CustomInventory(),this);
     }
 
@@ -47,6 +46,11 @@ public final class MultiTeleport extends JavaPlugin {
         if(cmd.getName().equalsIgnoreCase("test")){
             CustomInventory i = new CustomInventory();
             i.newInventory(player,1);
+        }
+        if(cmd.getName().equalsIgnoreCase("anvil")){
+            CustomInventory i = new CustomInventory();
+            i.newAnvil(player);
+//            i.openAnvil(player);
         }
 
 
@@ -153,6 +157,8 @@ public final class MultiTeleport extends JavaPlugin {
             System.out.println(1);
         }
     }
+
+
 
 
 }
