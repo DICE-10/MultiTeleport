@@ -3,6 +3,7 @@ package io.github.dice10.multiteleport;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -61,6 +62,7 @@ public class tpPointJson {
                 writer.name("tp2name").value("");
                 writer.name("tp3").value("");
                 writer.name("tp3name").value("");
+                writer.name("notp").value("");
                 writer.endObject();
                 getLogger().info("書き込み");
 //            writer.endArray();
@@ -109,11 +111,19 @@ public class tpPointJson {
                             break;
                 case "tp3name": jsonTxt = (String) jsonObject.get("tp3name");
                             break;
+                case "notp":
+                            jsonTxt = (String) jsonObject.get("notp");
+                            if(jsonTxt.equals(null)){
+                                jsonTxt = "nothing";
+                            }
+                            break;
                 default: jsonTxt = null;
                             break;
             }
             //String name = (String) jsonObject.get("name");
-            getLogger().info(jsonTxt);
+            if(jsonTxt.equals(null) || jsonTxt.equals("") || jsonTxt.equals(" ")){
+                jsonTxt = tag;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,20 +143,51 @@ public class tpPointJson {
                     if(!name.equals(null)){
                         writer.name("homeName").value(name);
                     }
+                    else{
+                        writer.name("homeName").value("home");
+                    }
                     writer.name("home").value(place);
                 }
+                if(tpLocation.equalsIgnoreCase("tp1")){
+                    if(!name.equals(null)){
+                        writer.name("tp1name").value(name);
+                    }
+                    else{
+                        writer.name("tp1name").value("tp1");
+                    }
+                    writer.name("tp1").value(place);
+                }
+                if(tpLocation.equalsIgnoreCase("tp2")){
+                    if(!name.equals(null)){
+                        writer.name("tp2name").value(name);
+                    }
+                    else{
+                        writer.name("tp2name").value("tp2");
+                    }
+                    writer.name("tp2").value(place);
+                }
+                if(tpLocation.equalsIgnoreCase("tp3")){
+                    if(!name.equals(null)){
+                        writer.name("tp3name").value(name);
+                    }
+                    else{
+                        writer.name("tp3name").value("tp3");
+                    }
+                    writer.name("tp3").value(place);
+                }
+                if(tpLocation.equalsIgnoreCase("notp")){
+                    String notp = JSONRead(player,"notp");
+                    if(notp.equals("nothing")){
+                        notp = name;
+                        writer.name("notp").value(name);
+                    }
+                    else{
+                        writer.name("notp").value(notp+","+name);
+                    }
 
-
-                writer.name("tp1").value("");
-                writer.name("tp1name").value("");
-                writer.name("tp2").value("");
-                writer.name("tp2name").value("");
-                writer.name("tp3").value("");
-                writer.name("tp3name").value("");
+                }
                 writer.endObject();
-                getLogger().info("書き込み");
-//            writer.endArray();
-//            writer.endObject();
+                getLogger().info(ChatColor.GREEN+"["+player.getCustomName()+"]Teleport Point. Update!");
                 writer.close();
             } catch (IOException e) {
                 e.printStackTrace();

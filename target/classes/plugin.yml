@@ -15,4 +15,13 @@ commands:
 
   test:
 
-  anvil:
+  getTpItem:
+
+
+permissions:
+  MultiTeleport.getTPitem:
+    default: op
+  MultiTeleport.mtp:
+    default: op
+  MultiTeleport.ntp:
+    default: op

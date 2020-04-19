@@ -4,6 +4,7 @@ package io.github.dice10.multiteleport;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,16 +12,20 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import static net.wesjd.anvilgui.AnvilGUI.*;
 import static org.bukkit.Bukkit.getLogger;
 import static org.bukkit.Bukkit.getServer;
 
@@ -34,6 +39,8 @@ public class CustomInventory implements Listener {
     private double numY;
     private double numZ;
     private Location spawnpoint;
+    private String path = MultiTeleport.getPlugin(MultiTeleport.class).getDataFolder().getAbsolutePath();
+    private File folder = new File(path);
 
     public void newInventory(Player player,int page){
         Collection players = getServer().getOnlinePlayers();
@@ -96,6 +103,31 @@ public class CustomInventory implements Listener {
         homeIconMeta.setDisplayName("Home");
         homeIcon.setItemMeta(homeIconMeta);
 
+        ItemStack tp1Icon = new ItemStack(Material.MAP,1);
+        ItemMeta tp1Meta = tp1Icon.getItemMeta();
+        tp1Meta.setDisplayName(tpPoint.JSONRead(player,"tp1name"));
+        tp1Meta.addEnchant(Enchantment.ARROW_DAMAGE,1,true);
+        tp1Meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        tp1Meta.setLore(Collections.singletonList("tp1"));
+        tp1Icon.setItemMeta(tp1Meta);
+
+        ItemStack tp2Icon = new ItemStack(Material.MAP,1);
+        ItemMeta tp2Meta = tp2Icon.getItemMeta();
+        tp2Meta.setDisplayName(tpPoint.JSONRead(player,"tp2name"));
+        tp2Meta.addEnchant(Enchantment.ARROW_DAMAGE,1,true);
+        tp2Meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        tp2Meta.setLore(Collections.singletonList("tp2"));
+        tp2Icon.setItemMeta(tp2Meta);
+
+        ItemStack tp3Icon = new ItemStack(Material.MAP,1);
+        ItemMeta tp3Meta = tp3Icon.getItemMeta();
+        tp3Meta.setDisplayName(tpPoint.JSONRead(player,"tp3name"));
+        tp3Meta.addEnchant(Enchantment.ARROW_DAMAGE,1,true);
+        tp3Meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        tp3Meta.setLore(Collections.singletonList("tp3"));
+        tp3Icon.setItemMeta(tp3Meta);
+
+
         for(int k =0;k<inventoryCount;k++) {
             if(page == 1) {
                 switch (k) {
@@ -108,11 +140,20 @@ public class CustomInventory implements Listener {
                     case 5:
                         i.setItem(k, endIcon);
                         break;
-                    case 12:
-                        i.setItem(k, head);
-                        break;
+//                    case 12:
+//                        i.setItem(k, head);
+//                        break;
                     case 9:
                         i.setItem(k,homeIcon);
+                        break;
+                    case 11:
+                        i.setItem(k,tp1Icon);
+                        break;
+                    case 13:
+                        i.setItem(k,tp2Icon);
+                        break;
+                    case 15:
+                        i.setItem(k,tp3Icon);
                         break;
                     case 26:
                         i.setItem(k, next);
@@ -122,14 +163,16 @@ public class CustomInventory implements Listener {
                 }
             }
             else if(page == 2){
-                if(k == inventoryCount -1){
-                    i.setItem(k, next);
+                if(playerlist.size() > k){
+                    ItemStack p = new ItemStack(Material.PLAYER_HEAD,1);
+                    SkullMeta pm = (SkullMeta)p.getItemMeta();
+                    pm.setDisplayName(playerlist.get(k).getName());
+                    pm.setOwner(playerlist.get(k).getName());
+                    p.setItemMeta(pm);
+                    i.setItem(k,p);
                 }
                 else if(((count + 1) * 9) == k){
                     i.setItem(k, prev);
-                }
-                else if(k==0){
-                    i.setItem(k, head);
                 }
                 else{
                     i.setItem(k,empty);
@@ -139,117 +182,228 @@ public class CustomInventory implements Listener {
         }
     }
     @EventHandler
-    public void InventClick(InventoryClickEvent event) throws IOException {
+    public boolean InventClick(InventoryClickEvent event) throws IOException {
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
         ClickType click = event.getClick();
         Inventory open = event.getClickedInventory();
         ItemStack clicked = event.getCurrentItem();
+        tpPointJson tpPoint = new tpPointJson();
         try{
-        if(event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GREEN+str)){
-//            event.setCancelled(true);
-            if(event.getCurrentItem().getType().equals(Material.GRASS_BLOCK) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("Overworld")){
-                event.setCancelled(true);
-                spawnpoint =  getServer().getWorld("world").getSpawnLocation();
-                numX = spawnpoint.getX();
-                numY = spawnpoint.getY();
-                numZ = spawnpoint.getZ();
-                player.teleport(new Location(getServer().getWorld("world"),numX,numY,numZ));
-                player.sendMessage("オーバーワールドにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
-            }
-            else if(event.getCurrentItem().getType().equals(Material.NETHERRACK) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("Nether")){
-                event.setCancelled(true);
-                spawnpoint =  getServer().getWorld("world_nether").getSpawnLocation();
-                numX = spawnpoint.getX();
-                numY = spawnpoint.getY();
-                numZ = spawnpoint.getZ();
-                player.teleport(new Location(getServer().getWorld("world_nether"),numX,numY,numZ));
-                player.sendMessage("ネザーにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
-            }
-            else if(event.getCurrentItem().getType().equals(Material.END_STONE) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("The_End")){
-                event.setCancelled(true);
-                spawnpoint =  getServer().getWorld("world_the_end").getSpawnLocation();
-                numX = spawnpoint.getX();
-                numY = spawnpoint.getY();
-                numZ = spawnpoint.getZ();
-                player.teleport(new Location(getServer().getWorld("world_the_end"),numX,numY,numZ));
-                player.sendMessage("エンドにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
-            }
-            else if(event.getCurrentItem().getType().equals(Material.PLAYER_HEAD)){
-                String playerName = event.getCurrentItem().getItemMeta().getDisplayName();
-                player.sendMessage(playerName);
-                Collection players = getServer().getOnlinePlayers();
-                ArrayList<Player> playerlist = new ArrayList<>(players);
-                for(Player p : playerlist) {
-                    if (p.getName().equalsIgnoreCase(playerName)) {
-                        player.sendMessage(p.getName());
-                        player.sendMessage("X座標：" + String.valueOf(p.getLocation().getX()));
-                        player.sendMessage("Y座標：" + String.valueOf(p.getLocation().getY()));
-                        player.sendMessage("Z座標：" + String.valueOf(p.getLocation().getZ()));
-                        break;
-                    }
+            if(event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GREEN+str)){
+    //            event.setCancelled(true);
+                if(event.getCurrentItem().getType().equals(Material.GRASS_BLOCK) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("Overworld")){
+                    event.setCancelled(true);
+                    spawnpoint =  getServer().getWorld("world").getSpawnLocation();
+                    numX = spawnpoint.getX();
+                    numY = spawnpoint.getY();
+                    numZ = spawnpoint.getZ();
+                    player.teleport(new Location(getServer().getWorld("world"),numX,numY,numZ));
+                    player.sendMessage("オーバーワールドにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
                 }
-            }
-            else if(event.getCurrentItem().getType().equals(Material.LIGHT_GRAY_STAINED_GLASS_PANE) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase(" ")){
-                event.setCancelled(true);
-            }
-            else if(event.getCurrentItem().getType().equals(Material.ENCHANTED_BOOK)) {
-                String name = event.getCurrentItem().getItemMeta().getDisplayName();
-                if(name.equalsIgnoreCase("Next")){
-                    CustomInventory i = new CustomInventory();
-                    i.newInventory(player,2);
+                else if(event.getCurrentItem().getType().equals(Material.NETHERRACK) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("Nether")){
+                    event.setCancelled(true);
+                    spawnpoint =  getServer().getWorld("world_nether").getSpawnLocation();
+                    numX = spawnpoint.getX();
+                    numY = spawnpoint.getY();
+                    numZ = spawnpoint.getZ();
+                    player.teleport(new Location(getServer().getWorld("world_nether"),numX,numY,numZ));
+                    player.sendMessage("ネザーにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
                 }
-                else if(name.equalsIgnoreCase("Prev")){
-                    CustomInventory i = new CustomInventory();
-                    i.newInventory(player,1);
+                else if(event.getCurrentItem().getType().equals(Material.END_STONE) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("The_End")){
+                    event.setCancelled(true);
+                    spawnpoint =  getServer().getWorld("world_the_end").getSpawnLocation();
+                    numX = spawnpoint.getX();
+                    numY = spawnpoint.getY();
+                    numZ = spawnpoint.getZ();
+                    player.teleport(new Location(getServer().getWorld("world_the_end"),numX,numY,numZ));
+                    player.sendMessage("エンドにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
                 }
-                else if(slot >= 0 && slot == 2){
-                    try {
-                        getLogger().info("anvil");
-                    }catch (Exception e){
+                else if(event.getCurrentItem().getType().equals(Material.PLAYER_HEAD)){
+                    event.setCancelled(true);
+                    String playerName = event.getCurrentItem().getItemMeta().getDisplayName();
+                    Collection players = getServer().getOnlinePlayers();
+                    ArrayList<Player> playerlist = new ArrayList<>(players);
 
-                    }
-                }
-            }
+                    boolean flg = false;
 
-            else {
-                //何もしない
-            }
-        }
-        else if(event.getSlot() == Slot.INPUT_LEFT){
-            player.sendMessage("test");
-        }
-        else if(event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GREEN+str2) && open.getType().equals(InventoryType.ANVIL)){
-            player.sendMessage("test");
-            if(clicked != null){
-                if(event.getSlotType().equals(InventoryType.SlotType.RESULT)){
-                    if(clicked.hasItemMeta() && clicked.getItemMeta().hasDisplayName()){
-                        event.setCancelled(true);
-                        player.sendMessage(ChatColor.RED+"test");
+                    //プレイヤー一覧を調査
+                    for(Player p : playerlist) {
+                        String fileName = tpPoint.safeUUID(player.getUniqueId().toString()+"notTP");
+                        List<String> text = Files.readAllLines(Paths.get(path + "/" + fileName + ".notp"));
+                        String Name = tpPoint.safeUUID(p.getUniqueId().toString()+"notTP");
+                        List<String> resTxt = Files.readAllLines(Paths.get(path + "/" + Name + ".notp"));
+
+
+                        // 選択したプレイヤーアイコン名がサーバー内にいるか否か
+                        if (p.getName().equalsIgnoreCase(playerName)) {
+
+                            //右クリック時
+                            if(event.isRightClick()){
+                                File file = new File(path+"/"+fileName+".notp");
+                                Path filePath = Paths.get(path+"/"+fileName+".notp");
+                                FileWriter fileWrite = new FileWriter(path+"/"+fileName+".notp");
+                                ArrayList<String> strArray = new ArrayList<String>();
+
+                                FileReader fileReader = new FileReader(file);
+                                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                                PrintWriter pw = new PrintWriter(new BufferedWriter(fileWrite));
+
+                                String line;
+                                List<String> lineList = new ArrayList<String>();
+                                if(!folder.exists()){
+                                    folder.mkdir();
+                                    getLogger().info("ディレクトリを作成しました。");
+                                }
+                                if(!file.exists()){
+                                    try {
+                                        boolean newFile = file.createNewFile();
+                                        getLogger().info("ファイルを作成しました。");
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                getLogger().info(String.valueOf(text.size()));
+                                for(String ss:text){
+                                    getLogger().info(ss);
+                                }
+                                while((line = bufferedReader.readLine()) != null){
+                                    lineList.add(line);
+                                    player.sendMessage(line);
+                                }
+                                List<String> resList = new ArrayList<String>();
+                                resList = text;
+                                if(resList.size() == 0){
+                                    resList.add(String.valueOf(p.getUniqueId()));
+                                }
+                                else {
+                                    for (String s1 : resList) {
+                                        if (s1.equals(String.valueOf(p.getUniqueId()))) {
+                                            getLogger().info(">>>"+s1);
+                                            resList.remove(s1);
+                                            player.sendMessage(ChatColor.GREEN+p.getName()+"からのTPを許可します。");
+                                            flg = true;
+                                        } else {
+                                            resList.add(String.valueOf(p.getUniqueId()));
+                                        }
+                                    }
+                                }
+                                if(flg!=true){
+                                    player.sendMessage(ChatColor.GOLD +p.getName()+"からのTPを拒否します。");
+                                }
+                                for(String strList:resList){
+                                    pw.println(strList);
+                                }
+                                pw.close();
+//                                getLogger().info("test");
+//                                List<MetadataValue> metadata = player.getMetadata(TpFlagMetaData.TELEPORT_FLAG);
+//                                if(!player.hasMetadata(TpFlagMetaData.TELEPORT_FLAG)) {
+//                                    player.setMetadata(TpFlagMetaData.TELEPORT_FLAG, new FixedMetadataValue(plugin, p.getUniqueId()));
+//                                    player.sendMessage(ChatColor.GOLD +p.getName()+"からのTPを拒否します。");
+//                                }
+//                                else{
+//                                    List<MetadataValue> meta = p.getMetadata(TpFlagMetaData.TELEPORT_FLAG);
+//                                    //メタデータに登録されているデータを取得
+//                                    for(MetadataValue s : meta){
+//                                        String str = s.asString();
+//                                        //メタデータの値に","が含まれている場合
+//                                        if(str.contains(",")){
+//                                            //カンマ区切りの配列へ
+//                                            strArray = (ArrayList<String>) Arrays.asList(str.split(","));
+//                                            for(String s1 : strArray){
+//                                                // uuidが含まれていない場合は追加
+//                                                if(!s1.equals(p.getUniqueId())){
+//                                                    strArray.add(s1);
+//                                                    player.sendMessage(ChatColor.GOLD +p.getName()+"からのTPを拒否します。");
+//                                                }
+//                                                else{
+//                                                    strArray.remove(s1);
+//                                                    player.sendMessage(ChatColor.GREEN+p.getName()+"からのTPを許可します。");
+//                                                }
+//                                            }
+//                                        }
+//                                        else{
+//                                            String res = s + ","+p.getUniqueId();
+//                                        }
+//                                    }
+//                                    if(player.getMetadata(TpFlagMetaData.TELEPORT_FLAG).contains(p.getUniqueId())){
+//                                        player.getMetadata(TpFlagMetaData.TELEPORT_FLAG).remove(metadata.indexOf(p.getUniqueId()));
+//                                        player.sendMessage(ChatColor.GREEN+p.getName()+"からのTPを許可します。");
+//                                    }
+//                                    else{
+//                                        player.sendMessage("test");
+//                                        player.getMetadata(TpFlagMetaData.TELEPORT_FLAG);
+//                                        player.sendMessage("test2");
+//                                        player.sendMessage(ChatColor.GOLD +p.getName()+"からのTPを拒否します。");
+//                                    }
+//                                }
+                                break;
+                            }
+    //                        player.sendMessage(p.getName());
+                            else if(event.isLeftClick()) {
+                                getLogger().info(">>>"+String.valueOf(resTxt.size()));
+                                if(resTxt.size() != 0) {
+                                    for (String res : resTxt) {
+                                        getLogger().info(res);
+                                        getLogger().info(String.valueOf(player.getUniqueId()));
+                                        if (res.equals(String.valueOf(player.getUniqueId()))) {
+                                            player.sendMessage(ChatColor.RED + p.getName() + "へのTPは許可されていません。");
+                                            p.sendMessage(ChatColor.YELLOW + player.getName() + "があなたへTPしようとしました。");
+                                        }
+                                        return false;
+                                    }
+                                }
+                                else {
+                                    numX = p.getLocation().getX();
+                                    numY = p.getLocation().getY();
+                                    numZ = p.getLocation().getZ();
+                                    String world_name = p.getWorld().getName();
+                                    player.teleport(new Location(getServer().getWorld(world_name), numX, numY, numZ));
+                                    player.sendMessage(ChatColor.AQUA + p.getName() + "へテレポートしました。");
+                                    return false;
+                                }
+                                    numX = p.getLocation().getX();
+                                    numY = p.getLocation().getY();
+                                    numZ = p.getLocation().getZ();
+                                    String world_name = p.getWorld().getName();
+                                    player.teleport(new Location(getServer().getWorld(world_name), numX, numY, numZ));
+                                    player.sendMessage(ChatColor.AQUA + p.getName() + "へテレポートしました。1");
+//                                List<MetadataValue> meta = p.getMetadata(String.valueOf(player.getUniqueId()));
+//                                if(!meta.isEmpty()) {
+//                                    if(p.hasMetadata(String.valueOf(player.getUniqueId()))){
+//                                        player.sendMessage(ChatColor.RED + p.getName() + "へのTPは許可されていません。");
+//                                        p.sendMessage(ChatColor.YELLOW + player.getName() + "があなたへTPしようとしました。");
+//                                        break;
+//                                    }
+//                                }
+
+                            }
+                        }
                     }
                 }
-                else if(event.getSlotType().equals(InventoryType.SlotType.CONTAINER)){
-                    getLogger().info("testa");
+                else if(event.getCurrentItem().getType().equals(Material.LIGHT_GRAY_STAINED_GLASS_PANE) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase(" ")){
+                    event.setCancelled(true);
+                }
+                else if(event.getCurrentItem().getType().equals(Material.ENCHANTED_BOOK)) {
+                    String name = event.getCurrentItem().getItemMeta().getDisplayName();
+                    if(name.equalsIgnoreCase("Next")){
+                        CustomInventory i = new CustomInventory();
+                        i.newInventory(player,2);
+                    }
+                    else if(name.equalsIgnoreCase("Prev")){
+                        CustomInventory i = new CustomInventory();
+                        i.newInventory(player,1);
+                    }
+                }
+
+                else {
+                    //何もしない
                 }
             }
-            try{
-                getLogger().info("test");
-                if(event.getRawSlot() == 0 && event.getCurrentItem() == null){
-                    getLogger().info("0");
-                }
-                if(event.getRawSlot() == 1){
-                    getLogger().info("1");
-                }
-                if(event.getRawSlot() == 2){
-                    getLogger().info("2");
-                }
-            }catch (Exception e){
-                getLogger().info("エラー");
-            }
-        }
         }catch (Exception e){
 
         }
+        return false;
     }
 
     public void newAnvil(Player player){
@@ -268,38 +422,18 @@ public class CustomInventory implements Listener {
         player.openInventory(anvilInventory);
     }
 
-    public void openAnvil(Player player){
-//        Builder builder = new Builder();
-//        builder.onClose(p -> {                      //called when the inventory is closing
-//            player.sendMessage("You closed the inventory.");
-//        })
-//                .onComplete((p, text) -> {           //called when the inventory output slot is clicked
-//                    if(text.equalsIgnoreCase("you")) {
-//                        player.sendMessage("You have magical powers!");
-//                        return Response.close();
-//                    } else {
-//                        return Response.text("Incorrect.");
-//                    }
-//                })                          //prevents the inventory from being closed
-//                .text("What is the meaning of life?")     //sets the text the GUI should start with
-//                .item(new ItemStack(Material.GOLD_BLOCK)) //use a custom item for the first slot
-//                .title("Enter your answer.")              //set the title of the GUI (only works in 1.14+)
-//                .plugin(plugin)                 //set the plugin instance
-//                .open(player);
+    public void setPointGUI(Player player){
+        Collection players = getServer().getOnlinePlayers();
+        ArrayList<Player> playerlist = new ArrayList<>(players);
+        Inventory i = null;
+        int count = 0;
+        int inventoryCount = 0;
+        int online = players.size();
+        i = plugin.getServer().createInventory(player, 27, ChatColor.DARK_GREEN + str);
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD,1);
+        SkullMeta headMeta = (SkullMeta)head.getItemMeta();
+        headMeta.setDisplayName("DICE_10");
+        headMeta.setOwner("DICE_10");
+        head.setItemMeta(headMeta);
     }
-//
-//    private static void newContainer(EntityPlayer entPlayer, Container container, String name, String txt){
-//
-//        Container cont = CraftEventFactory.callInventoryOpenEvent(entPlayer,container);
-//
-//        int nextContainerID = entPlayer.nextContainerCounter();
-//
-//        cont.windowId = nextContainerID;
-//        cont.addSlotListener(entPlayer);
-//        cont.checkReachable = false;
-//
-//        entPlayer.activeContainer = cont;
-//
-//        entPlayer.playerConnection.sendPacket(new PacketPlayOutOpenWindow(nextContainerID,name,new ChatComponentText(txt)));
-//    }
 }
