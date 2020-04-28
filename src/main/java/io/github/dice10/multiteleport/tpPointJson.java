@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -31,9 +32,8 @@ public class tpPointJson {
         }
         if(!file.exists()){
             try {
-                boolean newFile = file.createNewFile();
-                getLogger().info("ファイルを作成しました。");
-            } catch (IOException e) {
+                checkDate(player);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -45,6 +45,12 @@ public class tpPointJson {
         String safeUUID = safeUUID(player.getUniqueId().toString());
         File file = new File(path+"/"+safeUUID+".json");
         if(!file.exists()) {
+            try {
+                file.createNewFile();
+                getLogger().info("ファイルを作成しました");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             try {
                 JsonWriter writer = new JsonWriter(new FileWriter(file));
                 writer.setIndent(" ");  // インデントするようにした
@@ -71,6 +77,9 @@ public class tpPointJson {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        else{
+            getLogger().info("ファイルは存在します。");
         }
     }
     public void reload(Player player) {
@@ -133,63 +142,82 @@ public class tpPointJson {
     public void JSONWrite(Player player,String tpLocation,String name,String place){
         String safeUUID = safeUUID(player.getUniqueId().toString());
         File file = new File(path+"/"+safeUUID+".json");
-        if(!file.exists()) {
-            try {
-                JsonWriter writer = new JsonWriter(new FileWriter(file));
-                writer.setIndent(" ");  // インデントするようにした
+        JSONParser parser = new JSONParser();
+        JSONObject data = null;
 
-                writer.beginObject();
+        if(file.exists()) {
+            try {
+                data =  (JSONObject) parser.parse(
+                        new FileReader(file.getAbsolutePath()
+                        ));
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            try {
+                player.sendMessage(data.toString());
+
+                JSONObject jObject  = new JSONObject();
+//                JsonWriter writer = new JsonWriter(new FileWriter(file));
+//                writer.setIndent(" ");  // インデントするようにした
+//
+//                writer.beginObject();
                 if(tpLocation.equalsIgnoreCase("home")){
+                    jObject.containsKey("homeName");
+                    player.sendMessage(name);
                     if(!name.equals(null)){
-                        writer.name("homeName").value(name);
+                        jObject.put("homeName",name);
                     }
                     else{
-                        writer.name("homeName").value("home");
+                         jObject.put("homeName","home");
                     }
-                    writer.name("home").value(place);
+                    jObject.put("home",place);
+                    player.sendMessage(String.valueOf(jObject));
                 }
                 if(tpLocation.equalsIgnoreCase("tp1")){
                     if(!name.equals(null)){
-                        writer.name("tp1name").value(name);
+                        jObject.put("tp1name",name);
                     }
                     else{
-                        writer.name("tp1name").value("tp1");
+                        jObject.put("tp1name","tp1");
                     }
-                    writer.name("tp1").value(place);
+                    jObject.put("tp1",place);
                 }
                 if(tpLocation.equalsIgnoreCase("tp2")){
                     if(!name.equals(null)){
-                        writer.name("tp2name").value(name);
+                        jObject.put("tp2name",name);
                     }
                     else{
-                        writer.name("tp2name").value("tp2");
+                        jObject.put("tp2name","tp2");
                     }
-                    writer.name("tp2").value(place);
+                    jObject.put("tp2",place);
                 }
                 if(tpLocation.equalsIgnoreCase("tp3")){
                     if(!name.equals(null)){
-                        writer.name("tp3name").value(name);
+                        jObject.put("tp3name",name);
                     }
                     else{
-                        writer.name("tp3name").value("tp3");
+                        jObject.put("tp3name","tp3");
                     }
-                    writer.name("tp3").value(place);
+                    jObject.put("tp3",place);
                 }
                 if(tpLocation.equalsIgnoreCase("notp")){
                     String notp = JSONRead(player,"notp");
                     if(notp.equals("nothing")){
                         notp = name;
-                        writer.name("notp").value(name);
+                        jObject.put("notp",name);
                     }
                     else{
-                        writer.name("notp").value(notp+","+name);
+                        jObject.put("notp",notp+","+name);
                     }
 
                 }
-                writer.endObject();
-                getLogger().info(ChatColor.GREEN+"["+player.getCustomName()+"]Teleport Point. Update!");
-                writer.close();
-            } catch (IOException e) {
+
+//                writer.endObject();
+                getLogger().info(ChatColor.GREEN+"["+player.getName()+"]Teleport Point. Update!");
+//                writer.close();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

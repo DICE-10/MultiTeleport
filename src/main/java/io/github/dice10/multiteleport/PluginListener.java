@@ -19,8 +19,10 @@ public class PluginListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         // ログインしたプレイヤーにようこそメッセージを表示する
         tpPointJson tpPointJson = new tpPointJson();
+        tpPointProperty tpPointProperty = new tpPointProperty();
         tpPointJson.findJSONFile(event.getPlayer());
         tpPointJson.checkDate(event.getPlayer());
+        tpPointProperty.checkProperty(event.getPlayer());
 //        event.getPlayer().sendMessage("aaa");
     }
 
