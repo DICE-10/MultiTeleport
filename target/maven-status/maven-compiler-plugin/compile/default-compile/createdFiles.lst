@@ -2,6 +2,7 @@ io\github\dice10\multiteleport\tpPointProperty.class
 io\github\dice10\multiteleport\MultiTeleport.class
 io\github\dice10\multiteleport\TpMetaData.class
 io\github\dice10\multiteleport\tpPointJson.class
+io\github\dice10\multiteleport\addTpItemRecipe.class
 io\github\dice10\multiteleport\PluginListener.class
 io\github\dice10\multiteleport\CustomInventory.class
 io\github\dice10\multiteleport\safetyUUID.class

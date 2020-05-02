@@ -30,6 +30,11 @@ public final class MultiTeleport extends JavaPlugin {
         getLogger().info("プラグインを有効化しました。");
         getServer().getPluginManager().registerEvents(new PluginListener(this), this);
         getServer().getPluginManager().registerEvents(new CustomInventory(), this);
+        getServer().getPluginManager().registerEvents(new addTpItemRecipe(), this);
+        addTpItemRecipe addItemRecipe = new addTpItemRecipe();
+        addItemRecipe.addRecipe();
+        tpPointProperty tpPointProperty = new tpPointProperty();
+
     }
 
     @Override
@@ -52,6 +57,7 @@ public final class MultiTeleport extends JavaPlugin {
             itemMeta.addEnchant(Enchantment.ARROW_DAMAGE, 1, true);
             itemMeta.setDisplayName("TP-Portal");
             itemMeta.setLocalizedName("MultiTeleport");
+            itemMeta.setCustomModelData(100);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             item.setItemMeta(itemMeta);
             ((Player) sender).getInventory().setItemInMainHand(item);

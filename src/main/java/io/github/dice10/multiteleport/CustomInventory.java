@@ -17,15 +17,11 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
-import static org.bukkit.Bukkit.getLogger;
 import static org.bukkit.Bukkit.getServer;
 
 //import org.bukkit.block.Container;
@@ -59,10 +55,6 @@ public class CustomInventory implements Listener {
         int count = 0;
         int inventoryCount = 0;
         int online = players.size();
-        tpPointJson tpPoint = new tpPointJson();
-
-        tpPoint.JSONRead(player,"name");
-
         if(page == 1) {
             inventoryCount = 27;
             i = plugin.getServer().createInventory(player, inventoryCount, ChatColor.DARK_GREEN + str);
@@ -82,7 +74,6 @@ public class CustomInventory implements Listener {
         ItemMeta nextMeta = next.getItemMeta();
         nextMeta.setDisplayName("Next");
         next.setItemMeta(nextMeta);
-
         ItemStack prev = new ItemStack(Material.ENCHANTED_BOOK,1);
         ItemMeta prevMeta = next.getItemMeta();
         prevMeta.setDisplayName("Prev");
@@ -93,7 +84,6 @@ public class CustomInventory implements Listener {
         ItemMeta emptyMeta = empty.getItemMeta();
         emptyMeta.setDisplayName(" ");
         empty.setItemMeta(emptyMeta);
-
         ItemStack slotIcon = new ItemStack(Material.LIGHT_BLUE_STAINED_GLASS_PANE,1);
         ItemMeta slotIconMeta = slotIcon.getItemMeta();
         slotIconMeta.setDisplayName("§9TPポイント名設定スロット");
@@ -103,7 +93,6 @@ public class CustomInventory implements Listener {
         loresList.add("§dしてください。");
         slotIconMeta.setLore(loresList);
         slotIcon.setItemMeta(slotIconMeta);
-
         ItemStack worldIcon = new ItemStack(Material.GRASS_BLOCK,1);
         ItemMeta worldIconMeta = worldIcon.getItemMeta();
         worldIconMeta.setDisplayName("Overworld");
@@ -113,7 +102,6 @@ public class CustomInventory implements Listener {
         ItemMeta netherIconMeta = netherIcon.getItemMeta();
         netherIconMeta.setDisplayName("Nether");
         netherIcon.setItemMeta(netherIconMeta);
-
         ItemStack endIcon = new ItemStack(Material.END_STONE,1);
         ItemMeta endIconMeta = endIcon.getItemMeta();
         endIconMeta.setDisplayName("The_End");
@@ -121,9 +109,11 @@ public class CustomInventory implements Listener {
 
         ItemStack homeIcon = new ItemStack(Material.BIRCH_DOOR,1);
         ItemMeta homeIconMeta = homeIcon.getItemMeta();
-        if(player.hasMetadata(TpMetaData.HOME_NAME)){
-            HomeName=tpMetaData.getMetaValue(player.getMetadata(TpMetaData.HOME_NAME));
-            if(HomeName.equals(null) || HomeName.equals("")){
+        if(tpPointProperty.readXML(player,"homeName") != null){
+//        if(player.hasMetadata(TpMetaData.HOME_NAME)){
+//            HomeName=tpMetaData.getMetaValue(player.getMetadata(TpMetaData.HOME_NAME));
+            HomeName = tpPointProperty.readXML(player,"homeName");
+            if(HomeName == null || HomeName == "" || HomeName.length() <=0){
                 HomeName = "HOME";
             }
         }
@@ -136,9 +126,11 @@ public class CustomInventory implements Listener {
 
         ItemStack tp1Icon = new ItemStack(Material.MAP,1);
         ItemMeta tp1Meta = tp1Icon.getItemMeta();
-        player.sendMessage("tp1");
-        if(player.hasMetadata(TpMetaData.TP1_NAME)){
-            Tp1Name = tpMetaData.getMetaValue(player.getMetadata(TpMetaData.TP1_NAME));
+        if(tpPointProperty.readXML(player,"tp1name") != null){
+            Tp1Name = tpPointProperty.readXML(player,"tp1name");
+            if(Tp1Name == null || Tp1Name == "" || Tp1Name.length() <= 0){
+                Tp1Name = "tp1name";
+            }
         }
         else{
             Tp1Name = "tp1name";
@@ -152,9 +144,11 @@ public class CustomInventory implements Listener {
 
         ItemStack tp2Icon = new ItemStack(Material.MAP,1);
         ItemMeta tp2Meta = tp2Icon.getItemMeta();
-        player.sendMessage("tp2");
-        if(player.hasMetadata(TpMetaData.TP2_NAME)){
-            Tp2Name = tpMetaData.getMetaValue(player.getMetadata(TpMetaData.TP2_NAME));
+        if(tpPointProperty.readXML(player,"tp2name") != null){
+            Tp2Name = tpPointProperty.readXML(player,"tp2name");
+            if(Tp2Name == null || Tp2Name == "" || Tp2Name.length() <= 0){
+                Tp2Name = "tp2name";
+            }
         }
         else{
             Tp2Name = "tp2name";
@@ -168,9 +162,11 @@ public class CustomInventory implements Listener {
 
         ItemStack tp3Icon = new ItemStack(Material.MAP,1);
         ItemMeta tp3Meta = tp3Icon.getItemMeta();
-        player.sendMessage("tp3");
-        if(player.hasMetadata(TpMetaData.TP3_NAME)){
-            Tp3Name = tpMetaData.getMetaValue(player.getMetadata(TpMetaData.TP3_NAME));
+        if(tpPointProperty.readXML(player,"tp3name") != null){
+            Tp3Name = tpPointProperty.readXML(player,"tp3name");
+            if(Tp3Name == null || Tp3Name == "" || Tp3Name.length() <= 0){
+                Tp3Name = "tp3name";
+            }
         }
         else{
             Tp3Name = "tp3name";
@@ -256,6 +252,19 @@ public class CustomInventory implements Listener {
         tpPointJson tpPoint = new tpPointJson();
         Map<String,Object> map = player.serialize();
         TpMetaData tpMetaData = new TpMetaData();
+        ItemStack tpItem = null;
+        ItemMeta tpItemMeta = null;
+        List<String> loresList = null;
+        String num = null;
+        int limit = 0;
+        if(player.getInventory().getItemInMainHand().getType().equals(Material.END_PORTAL_FRAME)){
+            tpItem = player.getInventory().getItemInMainHand();
+            tpItemMeta = tpItem.getItemMeta();
+            loresList = tpItemMeta.getLore();
+            num = loresList.get(1);
+            num = num.replaceAll("[§][0-9,a-f]","");
+            limit = Integer.parseInt(num);
+        }
         try{
             if(event.getView().getTitle().equalsIgnoreCase(ChatColor.DARK_GREEN+str)){
     //            event.setCancelled(true);
@@ -266,7 +275,30 @@ public class CustomInventory implements Listener {
                     numY = spawnpoint.getY();
                     numZ = spawnpoint.getZ();
                     player.teleport(new Location(getServer().getWorld("world"),numX,numY,numZ));
-                    player.sendMessage("オーバーワールドにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
+                    if(limit >0) {
+                        player.sendMessage("オーバーワールドにテレポートしました。[ｘ：" + numX + ",ｙ：" + numY + ",ｚ：" + numZ + "]");
+                        limit -= 1;
+                        if(limit <= 0){
+                            player.getInventory().setItemInMainHand(null);
+                            player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                            player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                            return false;
+                        }
+                        if(limit <= 5){
+                            loresList.set(1, "§c"+limit);
+                        }
+                        else if(limit <= 10){
+                            loresList.set(1, "§e"+limit);
+                        }
+                        else{
+                            loresList.set(1, "§f"+limit);
+                        }
+
+                        tpItemMeta.setLore(loresList);
+                        tpItem.setItemMeta(tpItemMeta);
+                        player.sendMessage("残り使用回数§c"+limit+"回");
+                    }
+
                 }
                 else if(event.getCurrentItem().getType().equals(Material.NETHERRACK) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("Nether")){
                     event.setCancelled(true);
@@ -275,7 +307,28 @@ public class CustomInventory implements Listener {
                     numY = spawnpoint.getY();
                     numZ = spawnpoint.getZ();
                     player.teleport(new Location(getServer().getWorld("world_nether"),numX,numY,numZ));
-                    player.sendMessage("ネザーにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
+                    if(limit >0) {
+                        limit -= 1;
+                        player.sendMessage("ネザーにテレポートしました。[ｘ：" + numX + ",ｙ：" + numY + ",ｚ：" + numZ + "]");
+                        if(limit <= 0){
+                            player.getInventory().setItemInMainHand(null);
+                            player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                            player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                            return false;
+                        }
+                        if(limit <= 5){
+                            loresList.set(1, "§c"+limit);
+                        }
+                        else if(limit <= 10){
+                            loresList.set(1, "§e"+limit);
+                        }
+                        else{
+                            loresList.set(1, "§f"+limit);
+                        }
+                        tpItemMeta.setLore(loresList);
+                        tpItem.setItemMeta(tpItemMeta);
+                        player.sendMessage("残り使用回数§c"+limit+"回");
+                    }
                 }
                 else if(event.getCurrentItem().getType().equals(Material.END_STONE) && event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase("The_End")){
                     event.setCancelled(true);
@@ -285,13 +338,33 @@ public class CustomInventory implements Listener {
                     numY = spawnpoint.getY();
                     numZ = spawnpoint.getZ();
                     player.teleport(new Location(getServer().getWorld("world_the_end"),numX,numY,numZ));
-                    player.sendMessage("エンドにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
+                    if(limit >0) {
+                        limit -= 1;
+                        player.sendMessage("エンドにテレポートしました。[ｘ：" + numX + ",ｙ：" + numY + ",ｚ：" + numZ + "]");
+                        if(limit <= 0){
+                            player.getInventory().setItemInMainHand(null);
+                            player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                            player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                            return false;
+                        }
+                        if(limit <= 5){
+                            loresList.set(1, "§c"+limit);
+                        }
+                        else if(limit <= 10){
+                            loresList.set(1, "§e"+limit);
+                        }
+                        else{
+                            loresList.set(1, "§f"+limit);
+                        }
+                        tpItemMeta.setLore(loresList);
+                        tpItem.setItemMeta(tpItemMeta);
+                        player.sendMessage("残り使用回数§c"+limit+"回");
+                    }
                 }
                 else if(event.getCurrentItem().getType().equals(Material.BIRCH_DOOR) && event.getCurrentItem().getItemMeta().getLocalizedName().equalsIgnoreCase("HOME_ICON")){
                     event.setCancelled(true);
 
                     if(event.isRightClick()) {
-                        player.sendMessage("右クリック");
                         world = player.getWorld().getName();
                         numX = player.getLocation().getX();
                         numY = player.getLocation().getY();
@@ -305,15 +378,15 @@ public class CustomInventory implements Listener {
                                 name = "HOME";
                             }
                             player.playSound(player.getLocation(), Sound.valueOf("BLOCK_ANVIL_USE"),1.0f,1.0f);
-                            event.getInventory().getItem(15).setData(null);
-                            tpPointProperty.writeXML(player,"home",name);
+                            event.getInventory().setItem(15,null);
                         }
                         player.sendMessage("{§a"+world+",§b"+numX+","+numY+","+numZ+"§a}§e{§6"+name+"§e}");
-                        tpMetaData.setHome(player,name);
+//                        tpMetaData.setHome(player,name);
+                        tpPointProperty.writeXML(player,"home",name);
                     }
                     else{
-                        TP = tpMetaData.getMetaValue(player.getMetadata(TpMetaData.HOME));
-                        pointName = tpMetaData.getMetaValue(player.getMetadata(TpMetaData.HOME_NAME));
+                        TP = tpPointProperty.readXML(player,"home");
+                        pointName = tpPointProperty.readXML(player,"homeName");
                         player.sendMessage(TP);
                         String[] tpArray = TP.split(",");
                         world = tpArray[0];
@@ -321,15 +394,36 @@ public class CustomInventory implements Listener {
                         numY = Double.parseDouble(tpArray[2]);
                         numZ = Double.parseDouble(tpArray[3]);
                         player.teleport(new Location(getServer().getWorld(world),numX,numY,numZ));
-                        player.sendMessage("§b"+pointName+"§fにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
+                        if(limit >0) {
+                            limit -= 1;
+                            player.sendMessage("§b" + pointName + "§fにテレポートしました。[ｘ：" + numX + ",ｙ：" + numY + ",ｚ：" + numZ + "]");
+                            if(limit <= 0){
+                                player.getInventory().setItemInMainHand(null);
+                                player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                                player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                                return false;
+                            }
+                            if(limit <= 5){
+                                loresList.set(1, "§c"+limit);
+                            }
+                            else if(limit <= 10){
+                                loresList.set(1, "§e"+limit);
+                            }
+                            else{
+                                loresList.set(1, "§f"+limit);
+                            }
+                            tpItemMeta.setLore(loresList);
+                            tpItem.setItemMeta(tpItemMeta);
+                            player.sendMessage("残り使用回数§c"+limit+"回");
+                        }
                     }
                 }
                 else if(event.getCurrentItem().getType().equals(Material.MAP) && event.getCurrentItem().getItemMeta().getLocalizedName().contains("tp")){
                     event.setCancelled(true);
                     String localName = event.getCurrentItem().getItemMeta().getLocalizedName();
                     String tag = null;
-                    String metaTag = null;
-                    String metaNameTag = null;
+                    String pointTag = null;
+                    String nameTag = null;
                     if(event.isRightClick()) {
                         player.sendMessage("右クリック");
                         world = player.getWorld().getName();
@@ -383,18 +477,14 @@ public class CustomInventory implements Listener {
                     }
                     else{
                         switch (localName){
-                            case "tp1": metaTag = TpMetaData.TP1;
-                                        metaNameTag = TpMetaData.TP1_NAME;
-                                break;
-                            case "tp2": metaTag = TpMetaData.TP2;
-                                        metaNameTag = TpMetaData.TP2_NAME;
-                                break;
-                            case "tp3": metaTag = TpMetaData.TP3;
-                                        metaNameTag = TpMetaData.TP3_NAME;
+                            case "tp1":
+                            case "tp2":
+                            case "tp3":  pointTag = tpPointProperty.readXML(player,localName);
+                                         nameTag = tpPointProperty.readXML(player,localName+"name");
                                 break;
                         }
-                        TP = tpMetaData.getMetaValue(player.getMetadata(metaTag));
-                        pointName = tpMetaData.getMetaValue(player.getMetadata(metaNameTag));
+                        TP = pointTag;
+                        pointName = nameTag;
                         player.sendMessage(TP);
                         String[] tpArray = TP.split(",");
                         world = tpArray[0];
@@ -402,7 +492,28 @@ public class CustomInventory implements Listener {
                         numY = Double.parseDouble(tpArray[2]);
                         numZ = Double.parseDouble(tpArray[3]);
                         player.teleport(new Location(getServer().getWorld(world),numX,numY,numZ));
-                        player.sendMessage("§b"+pointName+"§fにテレポートしました。[ｘ："+numX+",ｙ："+numY+",ｚ："+numZ+"]");
+                        if(limit >0) {
+                            limit -= 1;
+                            player.sendMessage("§b" + pointName + "§fにテレポートしました。[ｘ：" + numX + ",ｙ：" + numY + ",ｚ：" + numZ + "]");
+                            if(limit <= 0){
+                                player.getInventory().setItemInMainHand(null);
+                                player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                                player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                                return false;
+                            }
+                            if(limit <= 5){
+                                loresList.set(1, "§c"+limit);
+                            }
+                            else if(limit <= 10){
+                                loresList.set(1, "§e"+limit);
+                            }
+                            else{
+                                loresList.set(1, "§f"+limit);
+                            }
+                            tpItemMeta.setLore(loresList);
+                            tpItem.setItemMeta(tpItemMeta);
+                            player.sendMessage("残り使用回数§c"+limit+"回");
+                        }
                     }
                 }
                 else if(event.getCurrentItem().getType().equals(Material.BLACK_STAINED_GLASS_PANE) || event.getCurrentItem().getType().equals(Material.LIGHT_BLUE_STAINED_GLASS_PANE)){
@@ -418,10 +529,10 @@ public class CustomInventory implements Listener {
 
                     //プレイヤー一覧を調査
                     for(Player p : playerlist) {
-                        String fileName = tpPoint.safeUUID(player.getUniqueId().toString()+"notTP");
-                        List<String> text = Files.readAllLines(Paths.get(path + "/" + fileName + ".notp"));
-                        String Name = tpPoint.safeUUID(p.getUniqueId().toString()+"notTP");
-                        List<String> resTxt = Files.readAllLines(Paths.get(path + "/" + Name + ".notp"));
+//                        String fileName = tpPoint.safeUUID(player.getUniqueId().toString()+"notTP");
+//                        List<String> text = Files.readAllLines(Paths.get(path + "/" + fileName + ".notp"));
+//                        String Name = tpPoint.safeUUID(p.getUniqueId().toString()+"notTP");
+//                        List<String> resTxt = Files.readAllLines(Paths.get(path + "/" + Name + ".notp"));
 
 
                         // 選択したプレイヤーアイコン名がサーバー内にいるか否か
@@ -429,77 +540,75 @@ public class CustomInventory implements Listener {
 
                             //右クリック時
                             if(event.isRightClick()){
-                                player.setMetadata(p.getUniqueId().toString(),new FixedMetadataValue(plugin,p.getName()));
-                                File file = new File(path+"/"+fileName+".notp");
-                                Path filePath = Paths.get(path+"/"+fileName+".notp");
-                                FileWriter fileWrite = new FileWriter(path+"/"+fileName+".notp");
-                                ArrayList<String> strArray = new ArrayList<String>();
-
-                                FileReader fileReader = new FileReader(file);
-                                BufferedReader bufferedReader = new BufferedReader(fileReader);
-                                PrintWriter pw = new PrintWriter(new BufferedWriter(fileWrite));
-
-                                String line;
-                                List<String> lineList = new ArrayList<String>();
-                                if(!folder.exists()){
-                                    folder.mkdir();
-                                    getLogger().info("ディレクトリを作成しました。");
-                                }
-                                if(!file.exists()){
-                                    try {
-                                        boolean newFile = file.createNewFile();
-                                        getLogger().info("ファイルを作成しました。");
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                getLogger().info(String.valueOf(text.size()));
-                                for(String ss:text){
-                                    getLogger().info(ss);
-                                }
-                                while((line = bufferedReader.readLine()) != null){
-                                    lineList.add(line);
-                                    player.sendMessage(line);
-                                }
-                                List<String> resList = new ArrayList<String>();
-                                resList = text;
-                                if(resList.size() == 0){
-                                    resList.add(String.valueOf(p.getUniqueId()));
-                                }
-                                else {
-                                    for (String s1 : resList) {
-                                        if (s1.equals(String.valueOf(p.getUniqueId()))) {
-                                            getLogger().info(">>>"+s1);
-                                            resList.remove(s1);
-                                            player.sendMessage(ChatColor.GREEN+p.getName()+"からのTPを許可します。");
-                                            flg = true;
-                                        } else {
-                                            resList.add(String.valueOf(p.getUniqueId()));
-                                        }
-                                    }
-                                }
-                                if(flg!=true){
-                                    player.sendMessage(ChatColor.GOLD +p.getName()+"からのTPを拒否します。");
-                                }
-                                for(String strList:resList){
-                                    pw.println(strList);
-                                }
-                                pw.close();
-                                break;
+//                                player.setMetadata(p.getUniqueId().toString(),new FixedMetadataValue(plugin,p.getName()));
+////                                File file = new File(path+"/"+fileName+".notp");
+////                                Path filePath = Paths.get(path+"/"+fileName+".notp");
+//                                FileWriter fileWrite = new FileWriter(path+"/"+fileName+".notp");
+//                                ArrayList<String> strArray = new ArrayList<String>();
+//
+//                                FileReader fileReader = new FileReader(file);
+//                                BufferedReader bufferedReader = new BufferedReader(fileReader);
+//                                PrintWriter pw = new PrintWriter(new BufferedWriter(fileWrite));
+//
+//                                String line;
+//                                List<String> lineList = new ArrayList<String>();
+//                                if(!folder.exists()){
+//                                    folder.mkdir();
+//                                    getLogger().info("ディレクトリを作成しました。");
+//                                }
+//                                if(!file.exists()){
+//                                    try {
+//                                        boolean newFile = file.createNewFile();
+//                                        getLogger().info("ファイルを作成しました。");
+//                                    } catch (IOException e) {
+//                                        e.printStackTrace();
+//                                    }
+//                                }
+//                                getLogger().info(String.valueOf(text.size()));
+//                                for(String ss:text){
+//                                    getLogger().info(ss);
+//                                }
+//                                while((line = bufferedReader.readLine()) != null){
+//                                    lineList.add(line);
+//                                }
+//                                List<String> resList = new ArrayList<String>();
+//                                resList = text;
+//                                if(resList.size() == 0){
+//                                    resList.add(String.valueOf(p.getUniqueId()));
+//                                }
+//                                else {
+//                                    for (String s1 : resList) {
+//                                        if (s1.equals(String.valueOf(p.getUniqueId()))) {
+//                                            getLogger().info(">>>"+s1);
+//                                            resList.remove(s1);
+//                                            player.sendMessage(ChatColor.GREEN+p.getName()+"からのTPを許可します。");
+//                                            flg = true;
+//                                        } else {
+//                                            resList.add(String.valueOf(p.getUniqueId()));
+//                                        }
+//                                    }
+//                                }
+//                                if(flg!=true){
+//                                    player.sendMessage(ChatColor.GOLD +p.getName()+"からのTPを拒否します。");
+//                                }
+//                                for(String strList:resList){
+//                                    pw.println(strList);
+//                                }
+//                                pw.close();
+//                                break;
                             }
     //                        player.sendMessage(p.getName());
                             else if(event.isLeftClick()) {
-                                getLogger().info(">>>"+String.valueOf(resTxt.size()));
-                                if(resTxt.size() != 0) {
-                                    for (String res : resTxt) {
-                                        getLogger().info(res);
-                                        getLogger().info(String.valueOf(player.getUniqueId()));
-                                        if (res.equals(String.valueOf(player.getUniqueId()))) {
-                                            player.sendMessage(ChatColor.RED + p.getName() + "へのTPは許可されていません。");
-                                            p.sendMessage(ChatColor.YELLOW + player.getName() + "があなたへTPしようとしました。");
-                                        }
-                                        return false;
-                                    }
+                                if(/*resTxt.size() != 0*/false) {
+//                                    for (String res : resTxt) {
+//                                        getLogger().info(res);
+//                                        getLogger().info(String.valueOf(player.getUniqueId()));
+//                                        if (res.equals(String.valueOf(player.getUniqueId()))) {
+//                                            player.sendMessage(ChatColor.RED + p.getName() + "へのTPは許可されていません。");
+//                                            p.sendMessage(ChatColor.YELLOW + player.getName() + "があなたへTPしようとしました。");
+//                                        }
+//                                        return false;
+//                                    }
                                 }
                                 else {
                                     numX = p.getLocation().getX();
@@ -507,7 +616,28 @@ public class CustomInventory implements Listener {
                                     numZ = p.getLocation().getZ();
                                     String world_name = p.getWorld().getName();
                                     player.teleport(new Location(getServer().getWorld(world_name), numX, numY, numZ));
-                                    player.sendMessage(ChatColor.AQUA + p.getName() + "へテレポートしました。");
+                                    if(limit >0) {
+                                        limit -= 1;
+                                        player.sendMessage(ChatColor.AQUA + p.getName() + "へテレポートしました。");
+                                        if(limit <= 0){
+                                            player.getInventory().setItemInMainHand(null);
+                                            player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                                            player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                                            return false;
+                                        }
+                                        if(limit <= 5){
+                                            loresList.set(1, "§c"+limit);
+                                        }
+                                        else if(limit <= 10){
+                                            loresList.set(1, "§e"+limit);
+                                        }
+                                        else{
+                                            loresList.set(1, "§f"+limit);
+                                        }
+                                        tpItemMeta.setLore(loresList);
+                                        tpItem.setItemMeta(tpItemMeta);
+                                        player.sendMessage("残り使用回数§c"+limit+"回");
+                                    }
                                     return false;
                                 }
                                     numX = p.getLocation().getX();
@@ -515,16 +645,28 @@ public class CustomInventory implements Listener {
                                     numZ = p.getLocation().getZ();
                                     String world_name = p.getWorld().getName();
                                     player.teleport(new Location(getServer().getWorld(world_name), numX, numY, numZ));
-                                    player.sendMessage(ChatColor.AQUA + p.getName() + "へテレポートしました。1");
-//                                List<MetadataValue> meta = p.getMetadata(String.valueOf(player.getUniqueId()));
-//                                if(!meta.isEmpty()) {
-//                                    if(p.hasMetadata(String.valueOf(player.getUniqueId()))){
-//                                        player.sendMessage(ChatColor.RED + p.getName() + "へのTPは許可されていません。");
-//                                        p.sendMessage(ChatColor.YELLOW + player.getName() + "があなたへTPしようとしました。");
-//                                        break;
-//                                    }
-//                                }
-
+                                    if(limit >0) {
+                                        limit -= 1;
+                                        player.sendMessage(ChatColor.AQUA + p.getName() + "へテレポートしました。");
+                                        if(limit <= 0){
+                                            player.getInventory().setItemInMainHand(null);
+                                            player.playSound(player.getLocation(), Sound.valueOf("BLOCK_GLASS_BREAK"),1.0f,1.0f);
+                                            player.sendMessage("§c"+tpItemMeta.getDisplayName()+"が壊れました。");
+                                            return false;
+                                        }
+                                        if(limit <= 5){
+                                            loresList.set(1, "§c"+limit);
+                                        }
+                                        else if(limit <= 10){
+                                            loresList.set(1, "§e"+limit);
+                                        }
+                                        else{
+                                            loresList.set(1, "§f"+limit);
+                                        }
+                                        tpItemMeta.setLore(loresList);
+                                        tpItem.setItemMeta(tpItemMeta);
+                                        player.sendMessage("残り使用回数§c"+limit+"回");
+                                    }
                             }
                         }
                     }
@@ -584,4 +726,5 @@ public class CustomInventory implements Listener {
         headMeta.setOwner("DICE_10");
         head.setItemMeta(headMeta);
     }
+
 }

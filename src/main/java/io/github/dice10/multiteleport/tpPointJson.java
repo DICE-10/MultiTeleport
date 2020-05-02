@@ -3,7 +3,6 @@ package io.github.dice10.multiteleport;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 
+import static org.bukkit.Bukkit.getConsoleSender;
 import static org.bukkit.Bukkit.getLogger;
 
 public class tpPointJson {
@@ -215,7 +215,7 @@ public class tpPointJson {
                 }
 
 //                writer.endObject();
-                getLogger().info(ChatColor.GREEN+"["+player.getName()+"]Teleport Point. Update!");
+                getConsoleSender().sendMessage("§b["+player.getName()+"]Teleport Point. Update!");
 //                writer.close();
             } catch (Exception e) {
                 e.printStackTrace();

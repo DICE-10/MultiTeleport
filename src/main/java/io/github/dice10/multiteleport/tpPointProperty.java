@@ -28,20 +28,23 @@ public class tpPointProperty {
     public String TP3 ;
     public String TP3_NAME;
 
-    public void findJSONFile(Player player){
+    public boolean findProperty(Player player){
         String safeUUID = safeUUID(player.getUniqueId().toString());
-        File file = new File(path+"/"+safeUUID+".json");
+        File file = new File(path+"/"+safeUUID+".xml");
         if(!folder.exists()){
             folder.mkdir();
             getLogger().info("ディレクトリを作成しました。");
         }
         if(!file.exists()){
             try {
-//                checkDate(player);
+                checkProperty(player);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
+            return false;
+        }
+        else {
+            return true;
         }
     }
 
@@ -75,6 +78,7 @@ public class tpPointProperty {
             if (out != null) {
                 try {
                     out.close();
+                    System.out.println("ファイルを作成しました。");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
